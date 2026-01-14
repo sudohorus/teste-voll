@@ -1,24 +1,37 @@
 <template>
-    <div>
-        <h1 class="signup-container">Signup</h1>
-        <form @submit.prevent="Signup">
-            <div>
-                <label>Nome:</label>
-                <input type="text" v-model="name" required />
-            </div>
-            <div>
-                <label>Email:</label>
-                <input type="email" v-model="email" required />
-            </div>
-            <div>
-                <label>Senha:</label>
-                <input type="password" v-model="password" required />
-            </div>
-            <button type="submit">Entrar</button>
-        </form>
-        <ul v-if="errors.length" class="error">
-            <li v-for="(erro, index) in errors" :key="index">{{ erro }}</li>
-        </ul>
+    <div class="page">
+        <div class="card">
+            <h1>Signup</h1>
+
+            <form @submit.prevent="Signup">
+                <div class="field">
+                    <label>Nome</label>
+                    <input type="text" v-model="name" required />
+                </div>
+
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" v-model="email" required />
+                </div>
+
+                <div class="field">
+                    <label>Senha</label>
+                    <input type="password" v-model="password" required />
+                </div>
+
+                <button type="submit">Criar conta</button>
+            </form>
+            <p class="link-text">
+                Já tem conta?
+                <router-link to="/login">Entrar</router-link>
+            </p>
+
+            <ul v-if="errors.length" class="error-box">
+                <li v-for="(erro, index) in errors" :key="index">
+                    {{ erro }}
+                </li>
+            </ul>
+        </div>
     </div>
 </template>
 
@@ -33,42 +46,119 @@ export default {
             email: '',
             password: '',
             errors: []
-        };
+        }
     },
     methods: {
-        async Signup(){
+        async Signup() {
             try {
-                const response = await api.post('/signup', {
-                    "user": {
+                await api.post('/signup', {
+                    user: {
                         name: this.name,
                         email: this.email,
                         password: this.password
                     }
                 })
 
-                console.log(response)
-
-                this.$router.push('/login');
+                this.$router.push('/login')
             } catch (erro) {
-                if(erro.response && erro.response.data.errors){
-                    this.errors = erro.response.data.errors;
-                }else{
-                    this.errors = ['Erro inesperado'];
+                if (erro.response && erro.response.data.errors) {
+                    this.errors = erro.response.data.errors
+                } else {
+                    this.errors = ['Erro inesperado']
                 }
             }
         }
     }
-};
+}
 </script>
 
 <style>
-.signup-container{
-    max-width: 300px;
-    margin: auto;
-    padding: 20px;
+.page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f6fa;
+    font-family: Arial, sans-serif;
 }
 
-.error{
-   color: red;
+.card {
+    background: #fff;
+    padding: 24px;
+    width: 100%;
+    max-width: 350px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.card h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.field label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.field input {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.field input:focus {
+    outline: none;
+    border-color: #5b8def;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #5b8def;
+    border: none;
+    color: white;
+    font-size: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #4a7bd0;
+}
+
+.error-box {
+    margin-top: 15px;
+    padding: 10px;
+    background: #ffe6e6;
+    color: #b00020;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.link-text{
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.link-text a{
+    color: #5b8def;
+    text-decoration: none;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.link-text a:hover{
+    text-decoration: underline;
 }
 </style>
