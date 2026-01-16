@@ -2,10 +2,14 @@ FROM node:16
 
 WORKDIR /app
 
-COPY package*.json ./
+RUN mkdir -p /app/node_modules && chown -R node:node /app
+
+USER node
+
+COPY --chown=node:node package*.json ./
 RUN npm install
 
-COPY . .
+COPY --chown=node:node . .
 
 EXPOSE 8080
 
