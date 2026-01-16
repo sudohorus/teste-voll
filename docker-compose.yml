@@ -6,7 +6,7 @@ services:
     volumes:
       - ./api:/app
 
-  frontend:
+  client:
     build: ./client
     ports:
       - "8080:8080"
