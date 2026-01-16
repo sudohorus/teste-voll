@@ -1,7 +1,8 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import LoginView from '../views/Login.vue'
+import LoginView from '@/views/Login.vue'
 import SignupView from '@/views/Signup.vue';
+import MessageView from '@/views/Messages.vue'
 
 Vue.use(VueRouter);
 
@@ -21,9 +22,9 @@ const routes = [
         component: SignupView
     },
     {
-        path: '/messages',
+        path: '/messages/:id?',
         name: 'Messages',
-        //component: "MessageView"
+        component: MessageView
     }
 ];
 

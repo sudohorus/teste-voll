@@ -11,6 +11,11 @@ module Api
                 end
             end
 
+            def index
+                users = User.select(:id, :name, :email)
+                render json: users, status: :ok
+            end
+
             private
 
             def user_params

@@ -49,7 +49,7 @@ export default {
                 })
 
                 localStorage.setItem('token', response.data.token)
-                this.$router.push('/chat')
+                this.$router.push('/messages')
             } catch (erro) {
                 this.error = 'Email ou senha inválidos'
                 console.log(erro)
