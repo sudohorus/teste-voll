@@ -15,7 +15,7 @@ module Api
                         "messages_#{message.receiver_id}",
                         message.as_json
                     )
-                    
+
                     render json: message, status: :created
                 else
                     render json: { errors: message.errors.full_messages }, status: :unprocessable_entity
@@ -29,13 +29,19 @@ module Api
 
             def show
                 other_user_id = params[:id]
+                page = (params[:page] || 1).to_i
+                per_page = (params[:per_page] || 20).to_i
+                offset = (page - 1) * per_page
+
                 messages = Message.where(
                     "(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)",
                     @current_user.id, other_user_id,
                     other_user_id, @current_user.id
-                ).order(created_at: :asc)
+                ).order(created_at: :desc)
+                 .limit(per_page)
+                 .offset(offset)
                 
-                render json: messages, status: :ok
+                render json: messages.reverse, status: :ok
             end
 
             private

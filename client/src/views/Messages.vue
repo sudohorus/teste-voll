@@ -54,7 +54,8 @@
           </div>
         </header>
 
-        <div class="messages-container" ref="messagesContainer">
+        <div class="messages-container" ref="messagesContainer" @scroll="handleScroll">
+          <div v-if="isLoading" class="loading-indicator">Carregando...</div>
           <div 
             v-for="message in currentMessages" 
             :key="message.id"
@@ -140,7 +141,11 @@ export default {
   name: 'MessagesView',
   data() {
     return {
-      messages: [],
+      messages: [], 
+      activeMessages: [],
+      page: 1,
+      hasMore: true,
+      isLoading: false,
       conversations: [],
       allUsers: [],
       usersMap: new Map(),
@@ -156,14 +161,7 @@ export default {
   },
   computed: {
     currentMessages() {
-      if (!this.selectedUser) return [];
-      
-      return this.messages
-        .filter(m => 
-          (m.sender_id === this.currentUserId && m.receiver_id === this.selectedUser.id) ||
-          (m.sender_id === this.selectedUser.id && m.receiver_id === this.currentUserId)
-        )
-        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      return this.activeMessages;
     },
     filteredUsers() {
       if (!this.searchQuery) return this.allUsers;
@@ -201,7 +199,7 @@ export default {
     formatTime,
     formatShortTime,
 
-    async loadData(silent = false) {
+    async loadData() {
       const token = localStorage.getItem('token');
       if (!token) return this.$router.push('/login');
 
@@ -220,13 +218,67 @@ export default {
 
         this.messages = messagesRes.data;
         this.buildConversations();
-
-        if (!silent) this.scrollToBottom();
       } catch (error) {
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           this.$router.push('/login');
         }
+      }
+    },
+
+    async fetchMessages(userId, reset = false) {
+      if (this.isLoading || (!this.hasMore && !reset)) return;
+      
+      this.isLoading = true;
+      if (reset) {
+        this.page = 1;
+        this.activeMessages = [];
+        this.hasMore = true;
+      }
+
+      try {
+        const response = await api.get(`/messages/${userId}`, {
+          params: { page: this.page }
+        });
+
+        const newMessages = response.data;
+        
+        if (newMessages.length < 20) {
+          this.hasMore = false;
+        }
+
+        if (reset) {
+          this.activeMessages = newMessages;
+          this.scrollToBottom();
+        } else {
+          const container = this.$refs.messagesContainer;
+          const oldHeight = container ? container.scrollHeight : 0;
+          const oldScrollTop = container ? container.scrollTop : 0;
+
+          this.activeMessages = [...newMessages, ...this.activeMessages];
+          
+          this.$nextTick(() => {
+            if (container) {
+              const newHeight = container.scrollHeight;
+              container.scrollTop = newHeight - oldHeight + oldScrollTop;
+            }
+          });
+        }
+
+        this.page++;
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    handleScroll() {
+      const container = this.$refs.messagesContainer;
+      if (!container) return;
+
+      if (container.scrollTop === 0 && this.hasMore && !this.isLoading) {
+        this.fetchMessages(this.selectedUser.id);
       }
     },
 
@@ -273,7 +325,7 @@ export default {
       const id = parseInt(userId);
       const user = this.usersMap.get(id) || this.allUsers.find(u => u.id === id) || { id, name: 'Usuário' };
       this.selectedUser = user;
-      this.scrollToBottom();
+      this.fetchMessages(id, true);
     },
 
     async sendMessage() {
@@ -286,10 +338,9 @@ export default {
             content: this.newMessage
           }
         });
+        
         this.newMessage = '';
-        this.scrollToBottom();
       } catch (error) {
-        console.error('Error sending message:', error);
         alert('Erro ao enviar mensagem');
       }
     },
@@ -302,14 +353,19 @@ export default {
         { channel: 'MessagesChannel', user_id: this.currentUserId },
         {
           received: (data) => {
-            this.messages.push(data);
-            this.buildConversations();
+            if (!this.messages.some(m => m.id === data.id)) {
+              this.messages.push(data);
+              this.buildConversations();
+            }
             
             const isRelatedToSelected = this.selectedUser && 
               (data.sender_id === this.selectedUser.id || data.receiver_id === this.selectedUser.id);
               
             if (isRelatedToSelected) {
-              this.scrollToBottom();
+              if (!this.activeMessages.some(m => m.id === data.id)) {
+                this.activeMessages.push(data);
+                this.scrollToBottom();
+              }
             }
           }
         }

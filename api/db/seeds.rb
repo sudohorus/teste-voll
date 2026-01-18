@@ -1,29 +1,33 @@
-User.create!(
-    name: "Usuario 1",
-    email: "usuario1@gmail.com",
-    password: "usuario1"
-)
+users = []
+5.times do |i|
+  users << User.create!(
+    name: "Usuario #{i + 1}",
+    email: "usuario#{i + 1}@gmail.com",
+    password: "usuario#{i + 1}"
+  )
+end
 
-User.create!(
-    name: "Usuario 2",
-    email: "usuario2@gmail.com",
-    password: "usuario2"
-)
 
-User.create!(
-    name: "Usuario 3",
-    email: "usuario3@gmail.com",
-    password: "usuario3"
-)
+30.times do |i|
+  sender = i.even? ? users[0] : users[1]
+  receiver = i.even? ? users[1] : users[0]
+  
+  Message.create!(
+    sender: sender,
+    receiver: receiver,
+    content: "Mensagem #{i + 1} de #{sender.name} para #{receiver.name}",
+    created_at: Time.now - (30 - i).minutes
+  )
+end
 
-User.create!(
-    name: "Usuario 4",
-    email: "usuario4@gmail.com",
-    password: "usuario4"
-)
-
-User.create!(
-    name: "Usuario 5",
-    email: "usuario5@gmail.com",
-    password: "usuario5"
-)
+5.times do |i|
+  sender = i.even? ? users[0] : users[2]
+  receiver = i.even? ? users[2] : users[0]
+  
+  Message.create!(
+    sender: sender,
+    receiver: receiver,
+    content: "Olá #{receiver.name}, mensagem #{i + 1}",
+    created_at: Time.now - (10 - i).minutes
+  )
+end
